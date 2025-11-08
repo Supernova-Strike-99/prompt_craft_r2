@@ -1,6 +1,6 @@
 // Lost & Found AI
 
-# Project for the promptcrAFT FINAL Round 
+# Project for the promptcraft FINAL Round 
 
 ->About This Project:
 Every day, people misplace or come across items like wallets, keys, books, and umbrellas. The primary challenge is not finding the item, but connecting the person who lost it with the one who found it.
