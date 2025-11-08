@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<!-- [MODIFIED] Removed bg-gray-100, will be on body. Added h-full -->
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIITB Lost and Found</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            // [NEW] Enabled class-based dark mode
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <!-- [NEW] Inline script to set theme before page renders (avoids FOUC) -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <!-- Set Inter as the default font -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for filter buttons */
+        .filter-btn.active {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            font-weight: 600;
+        }
+        /* [NEW] Custom styles for active theme button */
+        .theme-btn.active {
+            border-color: #3b82f6; /* blue-500 */
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        .dark .theme-btn.active {
+            border-color: #60a5fa; /* blue-400 */
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<!-- [MODIFIED] Added dark mode background -->
+<body class="h-full bg-gray-100 dark:bg-gray-900">
+    <!-- 
+      Navigation Bar
+    -->
+    <!-- [MODIFIED] Added dark mode styles -->
+    <nav class="bg-white dark:bg-gray-800 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <!-- [MODIFIED] Added IIITB logo and title -->
+                    <a href="#" class="flex items-center space-x-2" data-page="browse">
+                        <img class="h-8 w-auto" src="https://www.iiitb.ac.in/includefiles/pages/icons/IIITB_logo1.jpg" alt="IIITB Logo">
+                        <span class="text-xl font-bold text-gray-800 dark:text-gray-200">IIITB Lost & Found</span>
+                    </a>
+                </div>
+                <!-- Navigation Links -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <!-- Logged-out links -->
+                        <!-- [MODIFIED] Added dark mode styles -->
+                        <div id="nav-logged-out" class="flex items-baseline space-x-4">
+                            <a href="#" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium" data-page="browse">Browse Items</a>
+                            <a href="#" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium" data-page="login">Log In</a>
+                            <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500" data-page="signup">Sign Up</a>
+                        </div>
+                        <!-- Logged-in links -->
+                        <!-- [MODIFIED] Renamed 'Profile' to 'Settings', removed 'Log Out' -->
+                        <div id="nav-logged-in" class="hidden flex items-baseline space-x-4">
+                            <a href="#" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium" data-page="browse">Browse Items</a>
+                            <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-500" data-page="post">Post an Item</a>
+                            <a href="#" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium" data-page="settings">Settings</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Mobile menu button (optional) -->
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <!-- Icon (hamburger) -->
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 
+      Main Content Area
+    -->
+    <main>
+        <!-- Page: Browse & Search (Default) -->
+        <div id="page-browse" class="page-container max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <div class="px-4 py-6 sm:px-0">
+                <!-- Search & Filter Bar -->
+                <!-- [MODIFIED] Added dark mode styles -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="text" id="search-input" placeholder="Search for 'wallet', 'keys', 'book'..." class="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <!-- [MODIFIED] Added 'Claimed' filter button and responsive layout -->
+                        <div class="flex-shrink-0 flex flex-col sm:flex-row gap-2">
+                            <button class="filter-btn active w-full md:w-auto px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-filter="all">All</button>
+                            <button class="filter-btn w-full md:w-auto px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-filter="lost">Lost</button>
+                            <button class="filter-btn w-full md:w-auto px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-filter="found">Found</button>
+                            <button class="filter-btn w-full md:w-auto px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" data-filter="claimed">Claimed</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- [NEW] AI Chat Trigger -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-6 text-center">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Can't find your item?</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Let our AI agent scan the "Found" items for you.</p>
+                    <button id="btn-start-chat" data-page="ai-chat" class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-2 0c0 .993-.25 1.93-.7 2.75l1.017 1.017a.6.6 0 010 .849l-.707.707a.6.6 0 01-.848 0L13.75 13.7a7.96 7.96 0 01-3.75 1C5.224 14.7 2 11.67 2 8c0-3.67 3.224-6.7 8-6.7s8 3.03 8 6.7zM9 5a1 1 0 100 2 1 1 0 000-2zm2 0a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+                        </svg>
+                        Chat with our AI Agent
+                    </button>
+                </div>
+
+                <!-- Item Grid -->
+                <div id="item-grid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- Item cards will be dynamically inserted here by JavaScript -->
+                </div>
+                 <!-- [MODIFIED] Added dark mode styles -->
+                 <p id="no-items-message" class="hidden text-center text-gray-500 dark:text-gray-400 mt-10">No items found matching your criteria.</p>
+            </div>
+        </div>
+
+        <!-- Page: Log In -->
+        <!-- [MODIFIED] Added dark mode styles -->
+        <div id="page-login" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-6">Log In</h2>
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label for="login-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                        <input id="login-email" name="email" type="email" autocomplete="email" required value="user@example.com" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <input id="login-password" name="password" type="password" autocomplete="current-password" required value="password123" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Log In
+                        </button>
+                    </div>
+                    <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                        Don't have an account? <a href="#" class="font-medium text-blue-600 hover:text-blue-500" data-page="signup">Sign up</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page: Sign Up -->
+        <!-- [MODIFIED] Added dark mode styles -->
+        <div id="page-signup" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-6">Create Account</h2>
+                <form id="signup-form" class="space-y-6">
+                    <div>
+                        <label for="signup-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                        <input id="signup-name" name="name" type="text" required class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                        <input id="signup-email" name="email" type="email" autocomplete="email" required class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="signup-contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Info (Phone or Email)</label>
+                        <input id="signup-contact" name="contact" type="text" required placeholder="e.g., 555-123-4567 or help@me.com" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <input id="signup-password" name="password" type="password" autocomplete="new-password" required class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Create Account
+                        </button>
+                    </div>
+                    <p class="text-center text-sm text-gray-600 dark:text-gray-400">
+                        Already have an account? <a href="#" class="font-medium text-blue-600 hover:text-blue-500" data-page="login">Log in</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page: Post Item -->
+        <!-- [MODIFIED] Added dark mode styles -->
+        <div id="page-post" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-6">Report an Item</h2>
+                <form id="post-form" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">I have...</label>
+                        <div class="mt-2 flex gap-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="status" value="lost" required class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">Lost an item</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="status" value="found" required class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">Found an item</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="post-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name</label>
+                        <input id="post-name" name="name" type="text" required placeholder="e.g., 'Brown Leather Wallet'" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="post-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                        <button type="button" id="btn-generate-desc" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium float-right">
+                            ✨ Help me write this
+                        </button>
+                        <textarea id="post-description" name="description" rows="3" required placeholder="e.g., 'Has a small scratch on the corner...'" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"></textarea>
+                    </div>
+                    <div>
+                        <label for="post-location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location (Lost or Found)</label>
+                        <input id="post-location" name="location" type="text" required placeholder="e.g., 'Main Library Entrance'" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <!-- [NEW] Field for Collection Location (for "Found" items) -->
+                    <div id="collection-location-div" class="hidden">
+                        <label for="post-collection-location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Collection Location</label>
+                        <input id="post-collection-location" name="collectionLocation" type="text" placeholder="e.g., 'Reception Desk, Main Library'" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tell the user where they can collect the item from.</p>
+                    </div>
+                    <div>
+                        <label for="post-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date (Lost or Found)</label>
+                        <input id="post-date" name="date" type="date" required class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Submit Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Page: Settings [MODIFIED] Renamed from 'Profile' -->
+        <div id="page-settings" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <!-- [MODIFIED] Added dark mode styles -->
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-6">Settings</h2>
+                
+                <form id="settings-form" class="space-y-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">Account</h3>
+                    <div>
+                        <label for="settings-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                        <input id="settings-name" name="name" type="text" required class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <label for="settings-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                        <input id="settings-email" name="email" type="email" autocomplete="email" required class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400" disabled>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Email cannot be changed.</p>
+                    </div>
+                    <div>
+                        <label for="settings-contact" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contact Info (Phone or Email)</label>
+                        <input id="settings-contact" name="contact" type="text" required placeholder="e.g., 555-123-4567" class="mt-1 w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Update Account
+                        </button>
+                    </div>
+                </form>
+
+                <!-- [NEW] Theme Settings -->
+                <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Theme</h3>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Choose your preferred theme.</p>
+                    <div class="mt-4 flex gap-4">
+                        <button class="theme-btn flex-1 p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300" data-theme="light">Light</button>
+                        <button class="theme-btn flex-1 p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300" data-theme="dark">Dark</button>
+                        <button class="theme-btn flex-1 p-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300" data-theme="system">System</button>
+                    </div>
+                </div>
+
+                <!-- [NEW] Log Out Button -->
+                <div class="mt-8 border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <button id="logout-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        Log Out
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Page: Transition (Welcome) -->
+        <!-- [MODIFIED] Added dark mode styles -->
+        <div id="page-transition" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+                <h2 id="welcome-message" class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">Welcome!</h2>
+                <!-- Tailwind CSS Spinner -->
+                <div class="flex justify-center items-center my-6">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400">Loading your dashboard...</p>
+            </div>
+        </div>
+
+        <!-- [NEW] Page: Claim Transition -->
+        <div id="page-claim-transition" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 dark:text-gray-100 mb-6">Processing Claim...</h2>
+                <!-- Tailwind CSS Spinner -->
+                <div class="flex justify-center items-center my-6">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                </div>
+                <p class="text-gray-500 dark:text-gray-400">Verifying item and preparing contact details...</p>
+            </div>
+        </div>
+
+        <!-- [NEW] Page: Claim Info (Collect Item) -->
+        <div id="page-claim-info" class="page-container hidden max-w-md mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-2">Item Claimed!</h2>
+                <p class="text-center text-gray-600 dark:text-gray-400 mb-6">Please contact the finder to arrange collection.</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <span class="block text-sm font-medium text-gray-500 dark:text-gray-400">Item</span>
+                        <p id="claim-item-name" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Brown Leather Wallet</p>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-medium text-gray-500 dark:text-gray-400">Collection Location</span>
+                        <p id="claim-location" class="text-lg font-semibold text-gray-900 dark:text-gray-100">Main Library Entrance</p>
+                    </div>
+                    <div>
+                        <span class="block text-sm font-medium text-gray-500 dark:text-gray-400">Finder's Contact Info</span>
+                        <p id="claim-finder-contact" class="text-lg font-semibold text-gray-900 dark:text-gray-100">555-123-4567</p>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <button id="claim-back-btn" data-page="browse" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Back to Browse
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- [NEW] Page: Sherlock AI Investigation -->
+        <div id="page-sherlock" class="page-container hidden max-w-lg mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-6">Sherlock is on the Case!</h2>
+
+                <!-- Loading State -->
+                <div id="sherlock-loading" class="text-center">
+                    <div class="flex justify-center items-center my-6">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 dark:border-blue-400"></div>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400">Investigating all 'Found' items for a match...</p>
+                    <div class="mt-4 text-center text-gray-400 dark:text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mx-auto opacity-30">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Results State -->
+                <div id="sherlock-results" class="hidden">
+                    <h3 id="sherlock-title" class="text-xl font-semibold text-center text-gray-900 dark:text-gray-100">Case Solved!</h3>
+                    <p id="sherlock-reasoning" class="text-center text-gray-600 dark:text-gray-400 mt-2 italic">"Elementary, my dear user. This 'Found' item seems to be a match."</p>
+                    
+                    <!-- Match Card Container -->
+                    <div id="sherlock-match-card" class="mt-6 border-t border-b border-gray-200 dark:border-gray-700 py-6">
+                        <!-- The matching item card will be injected here -->
+                    </div>
+                    <div id="sherlock-no-match-message" class="hidden mt-6 text-center">
+                        <p class="text-lg text-gray-700 dark:text-gray-300">The trail is cold... No matches found for now. Your 'Lost' item is logged.</p>
+                    </div>
+
+                    <div class="mt-8">
+                        <button id="sherlock-back-btn" data-page="browse" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Back to Browse
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [NEW] Page: 404 Found AI Investigation -->
+        <div id="page-404-found" class="page-container hidden max-w-lg mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-extrabold text-center text-gray-900 dark:text-gray-100 mb-6">Agent 404 Found is on it!</h2>
+
+                <!-- Loading State -->
+                <div id="404-loading" class="text-center">
+                    <div class="flex justify-center items-center my-6">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600 dark:border-green-400"></div>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400">Scanning 'Lost' item reports for a potential owner...</p>
+                    <div class="mt-4 text-center text-gray-400 dark:text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mx-auto opacity-30">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5a3.375 3.375 0 0 0-3.375 3.375v2.625m5.25 0m-5.25 0a3.375 3.375 0 0 1-3.375-3.375v-2.625a3.375 3.375 0 0 1 3.375-3.375h1.5a3.375 3.375 0 0 1 3.375 3.375v2.625m-7.5 3.375h15M4.5 19.5v-2.25a.75.75 0 0 1 .75-.75h13.5a.75.75 0 0 1 .75.75v2.25" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Results State -->
+                <div id="404-results" class="hidden">
+                    <h3 id="404-title" class="text-xl font-semibold text-center text-gray-900 dark:text-gray-100">Match Found!</h3>
+                    <p id="404-reasoning" class="text-center text-gray-600 dark:text-gray-400 mt-2 italic">"This 'Lost' report seems to match the item you found."</p>
+                    
+                    <!-- Match Card Container -->
+                    <div id="404-match-card" class="mt-6 border-t border-b border-gray-200 dark:border-gray-700 py-6">
+                        <!-- The matching item card will be injected here -->
+                    </div>
+                    <div id="404-no-match-message" class="hidden mt-6 text-center">
+                        <p class="text-lg text-gray-700 dark:text-gray-300">Thanks for being a good samaritan! Your item is logged. We'll notify you if a match is reported.</p>
+                    </div>
+
+                    <div class="mt-8">
+                        <button id="404-back-btn" data-page="browse" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Back to Browse
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- [NEW] Page: AI Chat -->
+        <div id="page-ai-chat" class="page-container hidden">
+            <!-- This page is full-screen, so it doesn't use the standard max-w-lg -->
+            <div class="flex flex-col h-[calc(100vh-64px)]"> <!-- 100vh minus nav height -->
+                
+                <!-- Chat Header -->
+                <div class="flex-shrink-0 bg-white dark:bg-gray-800 shadow-md border-b border-gray-200 dark:border-gray-700">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <button data-page="browse" class="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <!-- AI Avatar: Replace this placehold.co URL with a public URL for your agent's image (like the one you uploaded). -->
+                                <img class="h-10 w-10 rounded-full" src="https://placehold.co/100x100/3B82F6/FFFFFF?text=AI" alt="AI Agent Avatar">
+                                <div>
+                                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Alex (AI Agent)</h2>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Online</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat History -->
+                <div id="chat-history" class="flex-grow p-4 md:p-6 space-y-4 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+                    <!-- Chat messages will be injected here -->
+                </div>
+
+                <!-- Chat Typing Indicator -->
+                <div id="chat-typing" class="hidden flex-shrink-0 p-4 md:px-6">
+                    <div class="flex items-center space-x-3">
+                        <img class="h-8 w-8 rounded-full" src="https://placehold.co/100x100/3B82F6/FFFFFF?text=AI" alt="AI Agent Avatar">
+                        <div class="text-gray-500 dark:text-gray-400">
+                            <span class="text-sm italic">Alex is typing...</span>
+                            <div class="flex space-x-1 mt-1">
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0s;"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Form -->
+                <div class="flex-shrink-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                    <form id="chat-form" class="flex items-center space-x-3">
+                        <input id="chat-input" type="text" placeholder="Describe your lost item..." class="flex-grow p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" autocomplete="off">
+                        <button type="submit" class="p-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 
+      Modal (for alerts)
+    -->
+    <!-- [MODIFIED] Added dark mode styles -->
+    <div id="modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <!-- Modal panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 sm:mx-0 sm:h-10 sm:w-10">
+                            <!-- Heroicon: information-circle -->
+                            <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100" id="modal-title">Notification</h3>
+                            <div class="mt-2">
+                                <p id="modal-message" class="text-sm text-gray-500 dark:text-gray-400">Your message here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button id="modal-close-btn" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 
+      JavaScript Logic
+    -->
+    <!-- [MODIFIED] THIS SCRIPT BLOCK IS COMPLETELY REPLACED -->
+    <script type="module">
+        // [NEW] Import Firebase services
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import {
+            getAuth,
+            onAuthStateChanged,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            updateProfile
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            addDoc,
+            setDoc,
+            getDoc,
+            updateDoc,
+            onSnapshot,
+            query,
+            orderBy
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- [NEW] Firebase Configuration ---
+        // ⬇️⬇️⬇️ YOUR KEYS HAVE BEEN INSERTED HERE ⬇️⬇️⬇️
+        const firebaseConfig = {
+            apiKey: "AIzaSyCswvsrZNCLTK2P1C0S_5nQlheanQ_67w0",
+            authDomain: "lostandfound-b7b9b.firebaseapp.com",
+            projectId: "lostandfound-b7b9b",
+            storageBucket: "lostandfound-b7b9b.firebasestorage.app",
+            messagingSenderId: "409276672103",
+            appId: "1:409276672103:web:fc55bda3540c5bad9b8cc2",
+            measurementId: "G-HMVL4V7362"
+        };
+        // ⬆️⬆️⬆️ YOUR KEYS HAVE BEEN INSERTED HERE ⬆️⬆️⬆️
+
+        // [NEW] Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- Gemini API URL ---
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=`;
+        
+        // ⬇️⬇️⬇️ YOUR GEMINI KEY HAS BEEN INSERTED HERE ⬇️⬇️⬇️
+        const GEMINI_API_KEY = "AIzaSyD9Atm5BC2koe320vC5HQ1d0J3fRidsl-0";
+        // ⬆️⬆️⬆️ YOUR GEMINI KEY HAS BEEN INSERTED HERE ⬆️⬆️⬆️
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- [MODIFIED] APPLICATION STATE ---
+            let state = {
+                currentUser: null,      // Will be populated by Firebase Auth
+                currentView: 'login',   // Start at login
+                filter: 'all',
+                searchTerm: '',
+                chatHistory: [],
+                // [MODIFIED] 'users' is now in Firebase.
+                // 'items' is now a local cache populated by our *live* Firestore listener.
+                items: []
+            };
+
+            // --- DOM SELECTORS (No changes) ---
+            const pageContainers = document.querySelectorAll('.page-container');
+            const navLoggedIn = document.getElementById('nav-logged-in');
+            const navLoggedOut = document.getElementById('nav-logged-out');
+            const itemGrid = document.getElementById('item-grid');
+            const noItemsMessage = document.getElementById('no-items-message');
+
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const postForm = document.getElementById('post-form');
+            const settingsForm = document.getElementById('settings-form');
+
+            const collectionLocationDiv = document.getElementById('collection-location-div');
+            const postCollectionLocationInput = document.getElementById('post-collection-location');
+            const postStatusRadios = postForm.querySelectorAll('input[name="status"]');
+
+            const btnGenerateDesc = document.getElementById('btn-generate-desc');
+            const postNameInput = document.getElementById('post-name');
+            const postLocationInput = document.getElementById('post-location');
+            const postDescriptionTextarea = document.getElementById('post-description');
+
+            const welcomeMessage = document.getElementById('welcome-message');
+
+            const searchInput = document.getElementById('search-input');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            const modal = document.getElementById('modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            const logoutBtn = document.getElementById('logout-btn');
+            const themeButtons = document.querySelectorAll('.theme-btn');
+
+            const claimItemName = document.getElementById('claim-item-name');
+            const claimFinderContact = document.getElementById('claim-finder-contact');
+            const claimLocation = document.getElementById('claim-location');
+
+            // Sherlock page selectors
+            const pageSherlock = document.getElementById('page-sherlock');
+            const sherlockLoading = document.getElementById('sherlock-loading');
+            const sherlockResults = document.getElementById('sherlock-results');
+            const sherlockTitle = document.getElementById('sherlock-title');
+            const sherlockReasoning = document.getElementById('sherlock-reasoning');
+            const sherlockMatchCard = document.getElementById('sherlock-match-card');
+            const sherlockNoMatchMessage = document.getElementById('sherlock-no-match-message');
+            const sherlockBackButton = document.getElementById('sherlock-back-btn');
+
+            // 404 Found page selectors
+            const page404Found = document.getElementById('page-404-found');
+            const loading404 = document.getElementById('404-loading');
+            const results404 = document.getElementById('404-results');
+            const title404 = document.getElementById('404-title');
+            const reasoning404 = document.getElementById('404-reasoning');
+            const matchCard404 = document.getElementById('404-match-card');
+            const noMatchMessage404 = document.getElementById('404-no-match-message');
+            const backButton404 = document.getElementById('404-back-btn');
+
+            // AI Chat selectors
+            const chatHistory = document.getElementById('chat-history');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const chatTyping = document.getElementById('chat-typing');
+            const btnStartChat = document.getElementById('btn-start-chat');
+
+
+            // --- [NEW] EVENT LISTENER for Post Item Status Radio (No changes) ---
+            postStatusRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (radio.value === 'found') {
+                        collectionLocationDiv.classList.remove('hidden');
+                        postCollectionLocationInput.required = true;
+                    } else {
+                        collectionLocationDiv.classList.add('hidden');
+                        postCollectionLocationInput.required = false;
+                    }
+                });
+            });
+
+            // --- RENDER FUNCTIONS ---
+
+            /**
+             * Main render function. Call this whenever state changes.
+             */
+            function render() {
+                updateNavBar();
+                renderItems();
+                showPage(state.currentView);
+            }
+
+            /**
+             * Shows/hides the correct nav links based on auth state.
+             */
+            function updateNavBar() {
+                if (state.currentUser) {
+                    navLoggedIn.classList.remove('hidden');
+                    navLoggedOut.classList.add('hidden');
+                } else {
+                    navLoggedIn.classList.add('hidden');
+                    navLoggedOut.classList.remove('hidden');
+                }
+            }
+
+            /**
+             * Hides all pages and shows the one specified by `pageId`.
+             */
+            function showPage(pageId) {
+                // Check for auth (No changes)
+                if (!state.currentUser && (pageId === 'post' || pageId === 'settings' || pageId === 'claim-transition' || pageId === 'claim-info' || pageId === 'sherlock' || pageId === '404-found' || pageId === 'ai-chat')) {
+                    pageId = 'login';
+                    showModal('You must be logged in to access this page.');
+                }
+
+                state.currentView = pageId;
+                pageContainers.forEach(page => {
+                    if (page.id === `page-${pageId}`) {
+                        page.classList.remove('hidden');
+                    } else {
+                        page.classList.add('hidden');
+                    }
+                });
+
+                // Pre-fill settings form when shown
+                if (pageId === 'settings' && state.currentUser) {
+                    document.getElementById('settings-name').value = state.currentUser.name;
+                    document.getElementById('settings-email').value = state.currentUser.email;
+                    document.getElementById('settings-contact').value = state.currentUser.contact;
+                }
+
+                // Start AI chat with a welcome message
+                if (pageId === 'ai-chat' && state.chatHistory.length === 0) {
+                    addMessageToChat('model', "Hello! I'm Alex. I can help you search our 'Found' items. Please describe the item you've lost, including details like color, brand, or location.");
+                }
+            }
+
+            /**
+             * Shows a custom modal alert.
+             */
+            function showModal(message) {
+                modalMessage.textContent = message;
+                modal.classList.remove('hidden');
+            }
+
+
+            // --- ITEM RENDERING and CLAIM FUNCTIONS ---
+
+            /**
+             * [MODIFIED] Creates the HTML for a single item card.
+             * It no longer looks up the user, it uses the denormalized data on the item.
+             * @param {object} item - The item object from Firestore.
+             * @returns {string} The HTML string for the item card.
+             */
+            function createItemCard(item) {
+                const user = state.currentUser;
+                
+                // [MODIFIED] We now use the poster info stored *on* the item.
+                // This is 'denormalization' and it's much faster!
+                const posterContact = item.posterContact || 'Contact not available';
+                const posterName = item.posterName || 'Anonymous';
+
+                let statusTag, contactInfoHtml = '', claimButtonHtml = '', claimedByHtml = '';
+
+                // --- Access Control ---
+                const isLoggedIn = !!user;
+                const isPoster = user && user.id === item.posterId;
+                const canClaim = isLoggedIn && !isPoster && item.status === 'found';
+
+                // --- Status Tag ---
+                switch (item.status) {
+                    case 'lost':
+                        statusTag = `<span class="absolute top-4 left-4 inline-block bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Lost</span>`;
+                        break;
+                    case 'found':
+                        statusTag = `<span class="absolute top-4 left-4 inline-block bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Found</span>`;
+                        break;
+                    case 'claimed':
+                        statusTag = `<span class="absolute top-4 left-4 inline-block bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-100 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Claimed</span>`;
+                        break;
+                }
+
+                // --- Contact Info (Access Control) ---
+                if (isLoggedIn && item.status !== 'claimed') {
+                    contactInfoHtml = `
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Contact ${posterName}</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">${isPoster ? '(This is your post)' : posterContact}</p>
+                        </div>
+                    `;
+                } else if (isLoggedIn && item.status === 'claimed') {
+                    // Handled by claimedByHtml
+                } else {
+                    contactInfoHtml = `
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Contact</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100 italic">Log in to view contact details</p>
+                        </div>
+                    `;
+                }
+
+                // --- Claim Button (Access Control) ---
+                if (canClaim) {
+                    claimButtonHtml = `
+                        <div class="mt-6">
+                            <button data-claim-item-id="${item.id}" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Is this yours? Claim it
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // --- Claimed By ---
+                if (item.status === 'claimed') {
+                    claimedByHtml = `
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Claimed By</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">${item.claimerName || 'A user'}</p>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden relative">
+                        ${statusTag}
+                        <div class="p-6 pt-12">
+                            <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">${item.name}</h3>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">${item.description}</p>
+                            
+                            <div class="space-y-2">
+                                <div>
+                                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Location</span>
+                                    <p class="text-gray-800 dark:text-gray-200">${item.location}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase">Date</span>
+                                    <p class="text-gray-800 dark:text-gray-200">${item.date}</p>
+                                </div>
+                            </div>
+
+                            ${contactInfoHtml}
+                            ${claimedByHtml}
+                            ${claimButtonHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            /**
+             * [MODIFIED] Renders items from the local state.
+             * The local state (state.items) is now populated by the Firestore listener.
+             */
+            function renderItems() {
+                // 1. Filter by status (No change)
+                let filteredItems = state.items.filter(item => {
+                    if (state.filter === 'all') return true;
+                    return item.status === state.filter;
+                });
+
+                // 2. Filter by search term (No change)
+                if (state.searchTerm) {
+                    filteredItems = filteredItems.filter(item =>
+                        item.name.toLowerCase().includes(state.searchTerm) ||
+                        item.description.toLowerCase().includes(state.searchTerm) ||
+                        item.location.toLowerCase().includes(state.searchTerm)
+                    );
+                }
+
+                // 3. Clear grid (No change)
+                itemGrid.innerHTML = '';
+
+                // 4. Render or show 'no items' message (No change)
+                if (filteredItems.length === 0) {
+                    noItemsMessage.classList.remove('hidden');
+                } else {
+                    noItemsMessage.classList.add('hidden');
+                    filteredItems.forEach(item => {
+                        itemGrid.innerHTML += createItemCard(item);
+                    });
+                }
+            }
+
+
+            /**
+             * [MODIFIED] Handles the logic for claiming an item using Firestore.
+             * @param {string} itemId - The ID of the item to claim.
+             */
+            async function handleClaimItem(itemId) { // Make async
+                const item = state.items.find(i => i.id === itemId);
+
+                if (!item) {
+                    showModal("Error: Could not find item.");
+                    showPage('browse');
+                    return;
+                }
+
+                showPage('claim-transition');
+
+                try {
+                    // [NEW] Update the item in Firestore
+                    const itemDocRef = doc(db, "items", itemId);
+                    await updateDoc(itemDocRef, {
+                        status: 'claimed',
+                        claimerId: state.currentUser.id,
+                        claimerName: state.currentUser.name
+                    });
+
+                    // [MODIFIED] The onSnapshot listener will automatically re-render the browse page.
+                    // We just show the claim info page.
+
+                    setTimeout(() => {
+                        // Populate and show info page
+                        claimItemName.textContent = item.name;
+                        claimLocation.textContent = item.collectionLocation || item.location;
+                        // [MODIFIED] Use the denormalized contact info from the item
+                        claimFinderContact.textContent = item.posterContact;
+                        
+                        showPage('claim-info');
+                    }, 1500); // Keep original delay
+
+                } catch (error) {
+                    console.error("Claim Item Error:", error);
+                    showModal("There was an error claiming the item. Please try again.");
+                    showPage('browse');
+                }
+            }
+
+
+            // --- [NEW] AI CHAT FUNCTIONS (No changes to logic) ---
+            // These functions will now read from the live 'state.items' cache.
+
+            /**
+             * Adds a message to the chat UI and state.
+             */
+            function addMessageToChat(role, text) {
+                state.chatHistory.push({ role, text });
+                
+                let messageHtml = '';
+                if (role === 'user') {
+                    messageHtml = `
+                        <div class="flex justify-end">
+                            <div class="bg-blue-600 text-white p-3 rounded-lg max-w-xs md:max-w-md">
+                                <p>${text}</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    messageHtml = `
+                        <div class="flex justify-start">
+                            <img class="h-8 w-8 rounded-full mr-3" src="https://placehold.co/100x100/3B82F6/FFFFFF?text=AI" alt="AI Agent Avatar">
+                            <div class="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 p-3 rounded-lg max-w-xs md:max-w-md">
+                                <p>${text}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                chatHistory.innerHTML += messageHtml;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+
+            /**
+             * Runs the AI chat logic.
+             */
+            async function runAIChat() {
+                chatTyping.classList.remove('hidden');
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                const systemPrompt = `
+                    You are Alex, a helpful AI assistant for a Lost & Found website. Your name is Alex.
+                    Your goal is to help a user find their lost item by searching a list of 'Found' items.
+                    1. Be friendly, empathetic, and conversational.
+                    2. Analyze the user's description of their 'lost' item.
+                    3. Compare it against the provided list of 'Found' items.
+                    4. If the user's description is too vague (e.g., "my bag"), ask clarifying questions (e.g., "What color is it? Where did you last see it?").
+                    5. If you find one or more likely matches, present them to the user clearly (mentioning name, description, location) and ask for confirmation. e.g., "I found a 'black wallet'... is this yours?"
+                    6. If you find no matches, politely inform the user and suggest they report their item using the 'Post an Item' button.
+                    7. Keep your responses concise and helpful.
+                `;
+
+                const historyForPrompt = state.chatHistory.map(msg => `${msg.role}: ${msg.text}`).join('\n');
+                const userMessage = state.chatHistory[state.chatHistory.length - 1].text;
+                
+                // [MODIFIED] This now reads from our live state.items cache!
+                const foundItems = state.items.filter(item => item.status === 'found');
+                
+                const userPrompt = `
+                    Our chat history so far:
+                    ${historyForPrompt}
+                    
+                    Here is a complete, up-to-date list of "Found" items in our database. Use this list to find a match for me:
+                    ${JSON.stringify(foundItems.length > 0 ? foundItems : "No 'found' items have been reported yet.")}
+                    
+                    What is your response to my last message ("${userMessage}")?
+                `;
+
+                try {
+                    const aiResponse = await callGeminiAPI(systemPrompt, userPrompt);
+                    if (aiResponse) {
+                        addMessageToChat('model', aiResponse);
+                    } else {
+                        throw new Error("AI returned an empty response.");
+                    }
+                } catch (error) {
+                    console.error("AI Chat Error:", error);
+                    addMessageToChat('model', "I'm sorry, I seem to be having trouble connecting. Please try again in a moment.");
+                } finally {
+                    chatTyping.classList.add('hidden');
+                }
+            }
+
+
+            // [NEW] Sherlock AI Logic (No changes to logic)
+            /**
+             * Runs the Sherlock AI to find a match for a newly posted 'lost' item.
+             * @param {object} lostItem - The item the user just reported as lost.
+             */
+            async function runSherlockAI(lostItem) {
+                showPage('sherlock');
+                sherlockLoading.classList.remove('hidden');
+                sherlockResults.classList.add('hidden');
+                sherlockMatchCard.innerHTML = '';
+                sherlockNoMatchMessage.classList.add('hidden');
+
+                // [MODIFIED] This now reads from our live state.items cache!
+                const foundItems = state.items.filter(item => item.status === 'found');
+
+                if (foundItems.length === 0) {
+                    setTimeout(() => { 
+                        sherlockTitle.textContent = "The Trail is Cold...";
+                        sherlockReasoning.textContent = "Your 'Lost' item has been logged. We don't have any 'Found' items in the system... yet.";
+                        sherlockNoMatchMessage.classList.remove('hidden');
+                        sherlockLoading.classList.add('hidden');
+                        sherlockResults.classList.remove('hidden');
+                    }, 1000);
+                    return;
+                }
+
+                const systemPrompt = `
+                    You are Sherlock Holmes, an AI detective. You are helping a user who just *lost* an item.
+                    Your task is to analyze this 'Lost' item and a list of 'Found' items, then identify the *single most likely* match.
+                    You must respond in a valid JSON format based on the provided schema.
+                    - If you find a strong match, set "matchFound" to true, provide the "itemId" of the match, and a brief, witty "reasoning" (in character as Sherlock) for the match.
+                    - If no items are a good match, set "matchFound" to false, "itemId" to null, and "reasoning" to a brief, witty remark (in character) about the case being cold for now.
+                `;
+
+                const userPrompt = `
+                    Mr. Holmes, I have *lost* this item.
+                    
+                    My Lost Item:
+                    ${JSON.stringify({ name: lostItem.name, description: lostItem.description, location: lostItem.location })}
+
+                    Here is a list of 'Found' items from other users. Can you deduce if my item is among them?
+                    
+                    List of Found Items:
+                    ${JSON.stringify(foundItems.map(item => ({ id: item.id, name: item.name, description: item.description, location: item.location })))}
+                `;
+
+                const schema = {
+                    type: "OBJECT",
+                    properties: {
+                        "matchFound": { "type": "BOOLEAN" },
+                        "itemId": { "type": "STRING" },
+                        "reasoning": { "type": "STRING" }
+                    },
+                    required: ["matchFound", "itemId", "reasoning"]
+                };
+                const generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                };
+
+                try {
+                    const jsonString = await callGeminiAPI(systemPrompt, userPrompt, generationConfig);
+                    const result = JSON.parse(jsonString);
+
+                    if (result.matchFound && result.itemId) {
+                        const matchedItem = state.items.find(item => item.id === result.itemId);
+                        if (matchedItem) {
+                            sherlockTitle.textContent = "Case Solved!";
+                            sherlockReasoning.textContent = `"${result.reasoning}"`;
+                            sherlockMatchCard.innerHTML = createItemCard(matchedItem); 
+                            sherlockNoMatchMessage.classList.add('hidden');
+                        } else {
+                            throw new Error("AI returned a non-existent item ID.");
+                        }
+                    } else {
+                        sherlockTitle.textContent = "The Trail is Cold...";
+                        sherlockReasoning.textContent = `"${result.reasoning}"`;
+                        sherlockNoMatchMessage.classList.remove('hidden');
+                    }
+
+                } catch (error) {
+                    console.error("Sherlock AI Error:", error);
+                    sherlockTitle.textContent = "A Puzzling Case";
+                    sherlockReasoning.textContent = "My apologies. There seems to be an error in my investigation. Your item is logged, but you'll have to browse manually for now.";
+                    sherlockNoMatchMessage.classList.remove('hidden');
+                } finally {
+                    sherlockLoading.classList.add('hidden');
+                    sherlockResults.classList.remove('hidden');
+                }
+            }
+            
+
+            // [NEW] 404 Found AI Logic (No changes to logic)
+            /**
+             * Runs the 404 Found AI to find a match for a newly posted 'found' item.
+             * @param {object} foundItem - The item the user just reported as found.
+             */
+            async function run404FoundAI(foundItem) {
+                showPage('404-found');
+                loading404.classList.remove('hidden');
+                results404.classList.add('hidden');
+                matchCard404.innerHTML = '';
+                noMatchMessage404.classList.add('hidden');
+
+                // [MODIFIED] This now reads from our live state.items cache!
+                const lostItems = state.items.filter(item => item.status === 'lost');
+
+                if (lostItems.length === 0) {
+                    setTimeout(() => {
+                        title404.textContent = "Thank You for Reporting!";
+                        reasoning404.textContent = "Your 'Found' item has been logged. We don't see any 'Lost' items in the system yet, but we'll keep an eye out.";
+                        noMatchMessage404.classList.remove('hidden');
+                        loading404.classList.add('hidden');
+                        results404.classList.remove('hidden');
+                    }, 1000);
+                    return;
+                }
+
+                const systemPrompt = `
+                    You are "404 Found", a helpful AI agent. You are helping a user who just *found* an item.
+                    Your task is to analyze this 'Found' item and a list of 'Lost' items, then identify the *single most likely* match.
+                    You must respond in a valid JSON format based on the provided schema.
+                    - If you find a strong match, set "matchFound" to true, provide the "itemId" of the match, and a brief, "reasoning" for the match.
+                    - If no items are a good match, set "matchFound" to false, "itemId" to null, and "reasoning" to a brief, encouraging remark about logging the item.
+                `;
+
+                const userPrompt = `
+                    Hello Agent 404, I just *found* this item.
+                    
+                    My Found Item:
+                    ${JSON.stringify({ name: foundItem.name, description: foundItem.description, location: foundItem.location })}
+
+                    Here is a list of 'Lost' items from other users. Can you see if this item belongs to any of them?
+                    
+                    List of Lost Items:
+                    ${JSON.stringify(lostItems.map(item => ({ id: item.id, name: item.name, description: item.description, location: item.location })))}
+                `;
+
+                const schema = {
+                    type: "OBJECT",
+                    properties: {
+                        "matchFound": { "type": "BOOLEAN" },
+                        "itemId": { "type": "STRING" },
+                        "reasoning": { "type": "STRING" }
+                    },
+                    required: ["matchFound", "itemId", "reasoning"]
+                };
+                const generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                };
+
+                try {
+                    const jsonString = await callGeminiAPI(systemPrompt, userPrompt, generationConfig);
+                    const result = JSON.parse(jsonString);
+
+                    if (result.matchFound && result.itemId) {
+                        const matchedItem = state.items.find(item => item.id === result.itemId);
+                        if (matchedItem) {
+                            title404.textContent = "Potential Match Found!";
+                            reasoning404.textContent = `"${result.reasoning}"`;
+                            matchCard404.innerHTML = createItemCard(matchedItem);
+                            noMatchMessage404.classList.add('hidden');
+                        } else {
+                            throw new Error("AI returned a non-existent item ID.");
+                        }
+                    } else {
+                        title404.textContent = "Item Logged Successfully";
+                        reasoning404.textContent = `"${result.reasoning}"`;
+                        noMatchMessage404.classList.remove('hidden');
+                    }
+
+                } catch (error) {
+                    console.error("404 Found AI Error:", error);
+                    title404.textContent = "Item Logged";
+                    reasoning404.textContent = "Thank you for posting. We had a slight error trying to find a match, but your item has been successfully reported.";
+                    noMatchMessage404.classList.remove('hidden');
+                } finally {
+                    loading404.classList.add('hidden');
+                    results404.classList.remove('hidden');
+                }
+            }
+
+            // --- Gemini API Function ---
+            // [MODIFIED] Cleaned up retry logic and API key check
+            async function callGeminiAPI(systemPrompt, userPrompt, generationConfig = null) {
+                if (!GEMINI_API_KEY) {
+                    console.error("GEMINI_API_KEY is not set.");
+                    showModal("AI Error: The Gemini API key is not configured. AI features will not work.");
+                    throw new Error("AI service is not configured.");
+                }
+
+                const apiUrl = `${GEMINI_API_URL}${GEMINI_API_KEY}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: userPrompt }] }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                };
+                
+                if (generationConfig) {
+                    payload.generationConfig = generationConfig;
+                }
+
+                // [MODIFIED] Simplified fetch logic
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error("API Error Response:", errorBody);
+                        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                    }
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        return candidate.content.parts[0].text;
+                    } else {
+                        console.warn("No valid text returned from API:", result);
+                        throw new Error("AI returned an empty or invalid response.");
+                    }
+                } catch (error) {
+                    console.error('Failed to call Gemini API:', error);
+                    throw error; // Re-throw the error to be caught by the calling function
+                }
+            }
+
+
+            // --- THEME LOGIC (No changes) ---
+
+            function applyTheme(theme) {
+                document.documentElement.classList.remove('dark');
+                localStorage.removeItem('theme');
+
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                } else if (theme === 'light') {
+                    localStorage.theme = 'light';
+                } else {
+                    localStorage.removeItem('theme');
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        document.documentElement.classList.add('dark');
+                    }
+                }
+                updateThemeButtons(theme);
+            }
+
+            function updateThemeButtons(activeTheme) {
+                themeButtons.forEach(btn => {
+                    if (btn.dataset.theme === activeTheme) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+
+            themeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    applyTheme(btn.dataset.theme);
+                });
+            });
+
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            updateThemeButtons(currentTheme);
+
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (!localStorage.getItem('theme')) {
+                    if (e.matches) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            });
+
+
+            // --- [MODIFIED] EVENT LISTENERS (with Firebase) ---
+
+            // Modal Close (No changes)
+            modalCloseBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+            });
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+
+            // Navigation Clicks (No changes)
+            document.body.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-page]');
+                if (target) {
+                    e.preventDefault();
+                    showPage(target.dataset.page);
+                }
+            });
+            
+            // Item Grid Event Delegation (No changes)
+            itemGrid.addEventListener('click', (e) => {
+                const claimButton = e.target.closest('[data-claim-item-id]');
+                if (claimButton) {
+                    const itemId = claimButton.dataset.claimItemId;
+                    handleClaimItem(itemId);
+                }
+            });
+            
+            // [MODIFIED] Logout Button
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    await signOut(auth);
+                    // onAuthStateChanged will handle hiding nav, etc.
+                    state.currentView = 'login';
+                    state.chatHistory = []; // Clear chat history on logout
+                    render(); // Show the login page
+                } catch (error) {
+                    console.error("Logout Error:", error);
+                    showModal("Error logging out. Please try again.");
+                }
+            });
+
+            // AI Chat Form (No changes)
+            chatForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                if (message) {
+                    addMessageToChat('user', message);
+                    chatInput.value = '';
+                    runAIChat();
+                }
+            });
+
+            // [MODIFIED] Login Form
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = loginForm.email.value;
+                const password = loginForm.password.value;
+                
+                try {
+                    // [NEW] Sign in with Firebase
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    
+                    // [MODIFIED] onAuthStateChanged will fetch the user's data.
+                    // We just need to show the transition page.
+                    // We'll optimistically use the email/display name for the welcome.
+                    welcomeMessage.textContent = `Welcome, ${userCredential.user.displayName || userCredential.user.email}!`;
+                    showPage('transition');
+                    
+                    setTimeout(() => {
+                        // By now, onAuthStateChanged should have run and populated state.currentUser
+                        state.currentView = 'browse';
+                        render(); // This will call showPage('browse') and update the nav
+                    }, 1500);
+
+                } catch (error) {
+                    console.error("Login Error:", error);
+                    let msg = "Invalid email or password.";
+                    if (error.code === 'auth/user-not-found') msg = "No account found with this email.";
+                    if (error.code === 'auth/invalid-credential') msg = "Invalid email or password.";
+                    showModal(`Login Failed: ${msg}`);
+                }
+            });
+
+            // [MODIFIED] Signup Form
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = signupForm.name.value;
+                const email = signupForm.email.value;
+                const contact = signupForm.contact.value;
+                const password = signupForm.password.value;
+
+                try {
+                    // 1. [NEW] Create user in Firebase Auth
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // 2. [NEW] Update their Auth profile (stores displayName)
+                    await updateProfile(user, { displayName: name });
+
+                    // 3. [NEW] Create a user document in Firestore to store extra info
+                    // We use 'setDoc' here to *set* the document with the user's ID
+                    await setDoc(doc(db, "users", user.uid), {
+                        name: name,
+                        email: email,
+                        contact: contact
+                    });
+
+                    // 4. [NEW] Manually update state.currentUser *now*
+                    // onAuthStateChanged will also fire, but this ensures our welcome message is correct.
+                    state.currentUser = { id: user.uid, email: user.email, name: name, contact: contact };
+                    
+                    // 5. Show transition
+                    welcomeMessage.textContent = `Welcome, ${name}!`;
+                    showPage('transition');
+                    setTimeout(() => {
+                        state.currentView = 'browse';
+                        render();
+                    }, 1500);
+
+                } catch (error) {
+                    console.error("Signup Error:", error);
+                    let msg = error.message;
+                    if (error.code === 'auth/email-already-in-use') msg = "This email is already taken.";
+                    if (error.code === 'auth/weak-password') msg = "Password must be at least 6 characters long.";
+                    showModal(`Signup Failed: ${msg}`);
+                }
+            });
+
+            // [MODIFIED] Post Item Form
+            postForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!state.currentUser) {
+                    showModal("You must be logged in to post.");
+                    return;
+                }
+
+                // [NEW] Create the item object with denormalized poster info
+                const itemData = {
+                    posterId: state.currentUser.id,
+                    posterName: state.currentUser.name,       // DENORMALIZED
+                    posterContact: state.currentUser.contact, // DENORMALIZED
+                    status: postForm.status.value,
+                    name: postForm.name.value,
+                    description: postForm.description.value,
+                    location: postForm.location.value,
+                    date: postForm.date.value,
+                    collectionLocation: postForm.status.value === 'found' ? postCollectionLocationInput.value : null,
+                    // [NEW] Add a timestamp for sorting
+                    createdAt: new Date() 
+                };
+                
+                try {
+                    // [NEW] Add to Firestore. This returns a reference to the new document.
+                    const docRef = await addDoc(collection(db, "items"), itemData);
+
+                    // [NEW] Create the full item object *with* its new ID to pass to the AI
+                    const newItem = {
+                        id: docRef.id,
+                        ...itemData
+                    };
+
+                    // [MODIFIED] The onSnapshot listener will handle re-rendering the browse page.
+                    // We just run the AI logic.
+                    if (newItem.status === 'lost') {
+                        runSherlockAI(newItem);
+                    } else {
+                        run404FoundAI(newItem);
+                    }
+                    
+                    postForm.reset();
+                    collectionLocationDiv.classList.add('hidden');
+                    postCollectionLocationInput.required = false;
+
+                } catch (error) {
+                    console.error("Post Item Error:", error);
+                    showModal("Error submitting your item. Please try again.");
+                }
+            });
+
+            // [MODIFIED] Settings Form
+            settingsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!state.currentUser) return;
+
+                const user = auth.currentUser;
+                const newName = settingsForm.name.value;
+                const newContact = settingsForm.contact.value;
+                
+                try {
+                    // 1. [NEW] Update Auth profile (for displayName)
+                    if (user.displayName !== newName) {
+                        await updateProfile(user, { displayName: newName });
+                    }
+                    
+                    // 2. [NEW] Update Firestore user document
+                    const userDocRef = doc(db, "users", user.uid);
+                    await updateDoc(userDocRef, {
+                        name: newName,
+                        contact: newContact
+                    });
+
+                    // 3. [NEW] Update local state immediately
+                    state.currentUser.name = newName;
+                    state.currentUser.contact = newContact;
+                    
+                    showModal('Account updated successfully!');
+                    render(); // Re-render to reflect changes
+                } catch (error) {
+                    console.error("Settings Update Error:", error);
+                    showModal(`Error updating account: ${error.message}`);
+                }
+            });
+
+            // Gemini - Generate Description Button (No changes)
+            btnGenerateDesc.addEventListener('click', async () => {
+                const originalBtnText = btnGenerateDesc.innerHTML;
+                btnGenerateDesc.innerHTML = 'Generating...';
+                btnGenerateDesc.disabled = true;
+
+                try {
+                    const itemName = postNameInput.value;
+                    const location = postLocationInput.value;
+                    const statusRadio = postForm.querySelector('input[name="status"]:checked');
+                    
+                    if (!itemName || !location || !statusRadio) {
+                        showModal("Please fill in 'I have...', 'Item Name', and 'Location' first before using AI.");
+                        return;
+                    }
+                    
+                    const status = statusRadio.value;
+
+                    const systemPrompt = "You are a helpful assistant for a Lost & Found website. Your job is to write a clear, friendly, and concise description for an item post, based on the user's details. Only return the description itself, nothing else. Do not add any extra greeting or sign-off.";
+                    
+                    const userPrompt = `
+                    Please write a 1-2 sentence description for my post.
+                    - Item Status: ${status}
+                    - Item Name: ${itemName}
+                    - Location: ${location}
+                    `;
+
+                    const generatedDesc = await callGeminiAPI(systemPrompt, userPrompt);
+
+                    if (generatedDesc) {
+                        postDescriptionTextarea.value = generatedDesc.trim();
+                        showModal("AI description has been generated!");
+                    } else {
+                        showModal("The AI couldn't generate a description. Please write one manually.");
+                    }
+
+                } catch (error) {
+                    console.error("Error generating description:", error);
+                    showModal("An error occurred while contacting the AI. Please try again or write a description manually.");
+                } finally {
+                    btnGenerateDesc.innerHTML = originalBtnText;
+                    btnGenerateDesc.disabled = false;
+                }
+            });
+
+            // Search & Filter Listeners (No changes)
+            searchInput.addEventListener('input', (e) => {
+                state.searchTerm = e.target.value.toLowerCase();
+                renderItems();
+            });
+
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    state.filter = btn.dataset.filter;
+                    renderItems();
+                });
+            });
+
+            // --- [NEW] FIREBASE AUTH & FIRESTORE LISTENERS ---
+
+            /**
+             * [NEW] Listens for changes to the 'items' collection in Firestore.
+             * This is the real-time magic!
+             */
+            function listenToItems() {
+                // Query the 'items' collection, order by the date they were created
+                const q = query(collection(db, "items"), orderBy("createdAt", "desc"));
+
+                onSnapshot(q, (snapshot) => {
+                    // Got new data!
+                    console.log("Firestore data updated!");
+                    
+                    // Map the Firestore documents to our state.items array
+                    state.items = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    // Re-render the item grid with the new data
+                    renderItems();
+                }, (error) => {
+                    console.error("Error listening to items:", error);
+                    showModal("Error connecting to the database. Please refresh the page.");
+                });
+            }
+
+            /**
+             * [NEW] Listens for changes in authentication state (login/logout).
+             * This is the new source of truth for 'state.currentUser'.
+             */
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    // User is signed in!
+                    // Let's fetch their profile from our 'users' collection in Firestore
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDocSnap = await getDoc(userDocRef);
+                    
+                    if (userDocSnap.exists()) {
+                        const userData = userDocSnap.data();
+                        state.currentUser = {
+                            id: user.uid,
+                            email: user.email,
+                            name: userData.name,
+                            contact: userData.contact
+                        };
+                    } else {
+                        // This might happen if signup was interrupted.
+                        // We'll just use the basic auth info.
+                        state.currentUser = {
+                            id: user.uid,
+                            email: user.email,
+                            name: user.displayName || 'User', // Fallback
+                            contact: '' // Fallback
+                        };
+                    }
+                } else {
+                    // User is signed out.
+                    state.currentUser = null;
+                }
+                
+                // Update the navbar (show/hide login/logout buttons)
+                updateNavBar();
+                // Re-render items (to show/hide contact info)
+                renderItems();
+
+                // If the user just logged out, boot them to the login page
+                if (!user && state.currentView !== 'login' && state.currentView !== 'signup') {
+                    showPage('login');
+                }
+            });
+
+
+            // --- INITIALIZATION ---
+            listenToItems(); // [NEW] Start listening for item updates from Firestore
+            showPage(state.currentView); // [MODIFIED] Show the initial page (login)
+            // The onAuthStateChanged listener will handle updating the nav and items
+            // when the auth state is first determined.
+
+        });
+    </script>
+</body>
+</html>
